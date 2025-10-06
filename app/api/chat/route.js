@@ -1,19 +1,20 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(req) {
-  const { messages } = await req.json();
+  const { message } = await req.json();
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages,
-  });
-
-  return new Response(
-    JSON.stringify({ reply: completion.choices[0].message.content }),
-    { status: 200 }
+  const res = await fetch(
+    "https://api-inference.huggingface.co/models/gpt2", 
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.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}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inputs: message }),
+    }
   );
+
+  const data = await res.json();
+  const reply = data?.generated_text || "Sorry, something went wrong";
+
+  return new Response(JSON.stringify({ reply }), { status: 200 });
 }
