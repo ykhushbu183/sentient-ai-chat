@@ -1,20 +1,30 @@
-export async function POST(req) {
-  const { message } = await req.json();
+import { NextResponse } from "next/server";
 
-  const res = await fetch(
-    "https://api-inference.huggingface.co/models/gpt2", 
-    {
+export async function POST(req) {
+  try {
+    const { message } = await req.json();
+
+    const res = await fetch("https://api-inference.huggingface.co/models/gpt2", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.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}`,
+        Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ inputs: message }),
-    }
-  );
+    });
 
-  const data = await res.json();
-  const reply = data?.generated_text || "Sorry, something went wrong";
+    const data = await res.json();
+    const reply =
+      Array.isArray(data) && data[0]?.generated_text
+        ? data[0].generated_text
+        : "Sorry, something went wrong";
 
-  return new Response(JSON.stringify({ reply }), { status: 200 });
+    return NextResponse.json({ reply });
+  } catch (err) {
+    console.error("Error:", err);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
